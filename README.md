@@ -130,9 +130,8 @@ The AI gives us back organized, clean data in a JSON file.
 ## 🔗 Resources
 
 - [Hugging Face Transformers Documentation](https://huggingface.co/docs/transformers)
-- [Qwen2 Model Collection](https://huggingface.co/collections/Qwen)
-- [PyTorch Memory Management](https://pytorch.org/docs/stable/notes/cuda.html)
+- [Qwen Models](https://huggingface.co/Qwen)
 
 ## 📝 License
 
-This educational demo is provided for learning purposes. 
+This educational demo is provided for learning purposes and is licensed under the MIT License. Anyone is free to use, modify, and distribute this project for any purpose. 
