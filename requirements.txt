@@ -1,0 +1,5 @@
+# Dependencies for Local Dental Claim Parser Demo
+torch>=2.0.0              # PyTorch for running the language model
+transformers>=4.35.0       # Hugging Face library for model loading
+accelerate>=0.20.0         # Memory optimization utilities
+safetensors>=0.3.0         # Safe model file format
