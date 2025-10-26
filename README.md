@@ -15,6 +15,27 @@ This demo shows how to use a small AI model to read dental claim tables extracte
 - Python installed on your computer
 - About 1GB of free memory
 
+## ⚠️ Windows Users - Important Fix for PyTorch
+
+If you encounter this error on Windows:
+```
+OSError: [WinError 126] The specified module could not be found. Error loading "c10.dll" or one of its dependencies.
+Microsoft Visual C++ Redistributable is not installed
+```
+
+**Fix Steps for PyTorch on Windows:**
+
+1. **Download the Correct Redistributable**
+   - Visit the official Microsoft link: https://aka.ms/vs/16/release/vc_redist.x64.exe
+   - Download and install the x64 version (not x86 unless you're using 32-bit Python)
+
+2. **Install and Restart**
+   - Run the installer as Administrator
+   - Restart your computer
+   - Test with: `python -c "import torch; print('PyTorch working!')"`
+
+This fixes the Visual C++ dependency issue that prevents PyTorch from loading on Windows.
+
 ## 🚀 How to Run
 
 ### 1. Install Python Libraries
