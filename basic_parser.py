@@ -1,63 +1,51 @@
 #!/usr/bin/env python3
 """
-Dental Claim Parser using Local Small Language Model
-====================================================
-This educational demo shows how to use a local Qwen2-0.5B model to parse
-dental claim tables and extract structured information.
+Dental Claim Parser using MLX Framework
+=======================================
+This educational demo shows how to use Apple's MLX framework with a local 
+Qwen2-0.5B model to parse dental claim tables and extract structured information.
 
 Key Learning Points:
-- Loading and using small local LLMs (500M parameters)
-- Memory optimization with Float16 precision
+- Loading and using small local LLMs (500M parameters) with MLX
+- Apple Silicon optimization with MLX framework
 - Prompt engineering for structured data extraction
 - JSON parsing and validation
 """
 
 import json
 import time
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
+from mlx_lm import load, generate
 
 def load_model():
     """
-    Load the Qwen2-0.5B model with optimizations for local inference
+    Load the Qwen2-0.5B model with MLX optimizations for Apple Silicon
     
     Returns:
-        tuple: (tokenizer, model) - Ready to use for inference
+        tuple: (model, tokenizer) - Ready to use for inference
         
     Key optimizations:
-    - Float16: Reduces memory usage by 50% (942MB vs 1885MB)
-    - low_cpu_mem_usage: Efficient loading for limited RAM
-    - use_cache: Speeds up sequential token generation
+    - MLX framework: Optimized for Apple Silicon (M1/M2/M3)
+    - Automatic memory management: No manual dtype/memory settings needed
+    - Native Apple Silicon acceleration: Better performance than PyTorch
     """
-    print("🤖 Loading Qwen2-0.5B model locally...")
+    print("🤖 Loading Qwen2-0.5B model with MLX...")
     start_time = time.time()
     
-    # Path to the local model files
-    model_path = "./models/qwen2-0.5b"
+    # Use the pre-converted MLX model from Hugging Face
+    model_path = "Qwen/Qwen2-0.5B-Instruct-MLX"
     
-    # Load tokenizer (converts text to numbers the model understands)
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    
-    # Ensure padding token exists (needed for batch processing)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    
-    # Load the language model with memory optimizations
-    model = AutoModelForCausalLM.from_pretrained(
+    # Load model and tokenizer using MLX
+    # MLX automatically handles memory optimization for Apple Silicon
+    model, tokenizer = load(
         model_path,
-        dtype=torch.float16,        # Half precision: 2 bytes per parameter instead of 4
-        low_cpu_mem_usage=True,     # Load efficiently to save RAM
-        use_cache=True,             # Cache previous computations for speed
+        tokenizer_config={"eos_token": "<|im_end|>"}
     )
-    
-    # Set to evaluation mode (no training, just inference)
-    model.eval()
     
     load_time = time.time() - start_time
     print(f"✅ Model loaded successfully in {load_time:.2f} seconds")
-    print(f"💾 Memory usage: ~942MB (Float16 optimization)")
+    print(f"💾 Memory usage: Optimized automatically by MLX for Apple Silicon")
     
-    return tokenizer, model
+    return model, tokenizer
 
 def get_test_data():
     """
@@ -147,26 +135,25 @@ Output JSON Structure:
     
     return system_prompt, user_prompt
 
-def generate_response(tokenizer, model, system_prompt, user_prompt):
+def generate_response(model, tokenizer, system_prompt, user_prompt):
     """
-    Use the language model to generate a structured response
+    Use the MLX language model to generate a structured response
     
-    This function handles the core LLM inference process:
+    This function handles the core LLM inference process using MLX:
     1. Format the conversation properly
-    2. Convert text to tokens (numbers)
-    3. Generate new tokens with the model
-    4. Convert tokens back to text
+    2. Apply chat template
+    3. Generate response using MLX (handles tokenization automatically)
     
     Args:
-        tokenizer: Converts between text and tokens
-        model: The language model for generation
+        model: The MLX language model for generation
+        tokenizer: MLX tokenizer for formatting
         system_prompt (str): Instructions for the model
         user_prompt (str): The actual task and data
         
     Returns:
         str: Generated response from the model
     """
-    print("🧠 Generating response from local model...")
+    print("🧠 Generating response with MLX...")
     start_time = time.time()
     
     # Step 1: Format as a conversation (like ChatGPT format)
@@ -176,34 +163,21 @@ def generate_response(tokenizer, model, system_prompt, user_prompt):
     ]
     
     # Step 2: Apply the model's chat template (Qwen2 specific formatting)
-    text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    
-    # Step 3: Convert text to tokens (numbers the model understands)
-    model_inputs = tokenizer(
-        [text], 
-        return_tensors="pt",     # Return PyTorch tensors
-        padding=True,            # Pad to consistent length
-        truncation=True,         # Cut off if too long
-        max_length=2048          # Maximum input length
+    text = tokenizer.apply_chat_template(
+        messages, 
+        tokenize=False, 
+        add_generation_prompt=True
     )
     
-    # Step 4: Generate new tokens using the model
-    with torch.no_grad():  # Don't compute gradients (we're not training)
-        generated_ids = model.generate(
-            **model_inputs,
-            max_new_tokens=400,           # Limit output length
-            do_sample=False,              # Use greedy decoding (most likely tokens)
-            pad_token_id=tokenizer.eos_token_id,
-            eos_token_id=tokenizer.eos_token_id,
-        )
-    
-    # Step 5: Extract only the newly generated tokens (remove input)
-    generated_ids = [
-        output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-    ]
-    
-    # Step 6: Convert tokens back to readable text
-    response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+    # Step 3: Generate response using MLX (much simpler than PyTorch!)
+    # MLX handles tokenization, generation, and decoding automatically
+    response = generate(
+        model, 
+        tokenizer, 
+        prompt=text,
+        max_tokens=400,          # Limit output length
+        verbose=False            # Don't print generation progress
+    )
     
     generation_time = time.time() - start_time
     print(f"✅ Response generated in {generation_time:.2f} seconds")
@@ -223,11 +197,11 @@ def main():
     5. Display the extracted information
     """
     print("🏥 Dental Claim Parser - Educational Demo")
-    print("Using Local Qwen2-0.5B Language Model")
+    print("Using MLX Framework with Qwen2-0.5B Language Model")
     print("=" * 50)
     
     # Step 1: Load the local language model
-    tokenizer, model = load_model()
+    model, tokenizer = load_model()
     
     # Step 2: Get sample dental claim data
     test_data = get_test_data()
@@ -238,7 +212,7 @@ def main():
     print("✅ Prompts prepared for model")
     
     # Step 4: Generate response using the local model
-    response = generate_response(tokenizer, model, system_prompt, user_prompt)
+    response = generate_response(model, tokenizer, system_prompt, user_prompt)
     
     # Step 5: Parse the JSON response (our prompt ensures it's clean JSON)
     try:
