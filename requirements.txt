@@ -1,3 +1,9 @@
-# Dependencies for Local Dental Claim Parser Demo
-mlx>=0.0.8                 # Apple's MLX framework for Apple Silicon
-mlx-lm>=0.0.8              # MLX language model utilities
+# Dependencies for Dental Claim Parser using MLX Framework
+# Requires Apple Silicon (M1/M2/M3) Mac
+
+# MLX Framework - Apple's ML framework optimized for Apple Silicon
+mlx>=0.20.0                     # Core MLX framework with Metal acceleration
+mlx-lm>=0.20.0                  # MLX language model utilities (load, generate)
+
+# Optional: For downloading models from Hugging Face
+huggingface-hub>=0.20.0         # Hugging Face model hub utilities (optional)
